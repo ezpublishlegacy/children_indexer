@@ -34,10 +34,10 @@ class ChildrenIndexerType extends eZDataType
 
     function metaData( $contentObjectAttribute )
     {
-        $metaDataArray = $attributes = array();
+        $metaDataArray = array();
         $children = $contentObjectAttribute->object()->mainNode()->children();
         $IncludedClass = eZINI::instance('ezcade.ini')->variable('ZoneArticleSettings', 'IncludedClass');
-        
+
         if(is_array($children))
         {
             foreach( $children as $child )
@@ -46,22 +46,28 @@ class ChildrenIndexerType extends eZDataType
                 {
                     continue;
                 }
-                $subObjectID = $child->attribute('contentobject_id');
-                if ( !$subObjectID )
+
+                $attributeMetaDataArray = array();
+                $object = $child->attribute( 'object' );
+                if( $object instanceof eZContentObject === false ) {
                     continue;
-                    $object = eZContentObject::fetch( $subObjectID );
-                    if ( eZContentObject::recursionProtect( $subObjectID ) )
+                }
+
+                if ( eZContentObject::recursionProtect( $object->attribute( 'id' ) ) )
+                {
+                    if ( !$object )
                     {
-                        if ( !$object )
-                        {
-                            continue;
-                        }
-                        $attributes = $object->contentObjectAttributes( true);
+                        continue;
                     }
-                $attributeMetaDataArray = eZContentObjectAttribute::metaDataArray( $attributes );
+
+                    $attributes = $object->contentObjectAttributes( true );
+                    $attributeMetaDataArray = eZContentObjectAttribute::metaDataArray( $attributes );
+                }
+
                 $metaDataArray = array_merge( $metaDataArray, $attributeMetaDataArray );
             }
         }
+
         return $metaDataArray;
     }
 }
